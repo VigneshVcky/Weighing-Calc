@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="manifest" href="manifest.json">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Weighing Calculator</title>
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background: #1c1c1c;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 10px;
+}
+
+.machine {
+    background: #2b2b2b;
+    padding: 15px;
+    border-radius: 15px;
+    width: 100%;
+    max-width: 340px;
+    box-shadow: 0 0 25px rgba(0,0,0,0.6);
+}
+
+.title {
+    text-align: center;
+    color: #00ff99;
+    font-size: 18px;
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+.machine > * { margin-bottom: 8px; }
+#bulkPrice { margin-bottom: 8px; }
+
+.display {
+    background: black;
+    color: #00ff99;
+    padding: 10px;
+    border-radius: 8px;
+    text-align: right;
+    border: 2px solid #00ff99;
+}
+
+.label { font-size: 11px; color: #aaa; }
+.value { font-size: 20px; font-weight: bold; }
+
+input, select {
+    width: 100%;
+    padding: 8px;
+    border-radius: 6px;
+    border: 2px solid #555;
+    background: #111;
+    color: #fff;
+}
+
+input.active {
+    border-color: #00ff99;
+    box-shadow: 0 0 5px #00ff99;
+}
+
+.total {
+    background: black;
+    color: #00ff99;
+    padding: 10px;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 22px;
+    border: 2px solid #00ff99;
+}
+
+.keypad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+
+.keypad button {
+    padding: 12px;
+    font-size: 16px;
+    border-radius: 8px;
+    border: none;
+    background: #444;
+    color: white;
+}
+
+.keypad button:active {
+    background: #00ff99;
+    color: black;
+}
+
+.clear { background: #ff4d4d !important; }
+.reset { background: #ffaa00 !important; }
+</style>
+</head>
+
+<body>
+
+<div class="machine">
+
+<div class="title">Weighing Calculator</div>
+
+<select id="mode" onchange="toggleMode(); calculate();">
+    <option value="perkg">Price per KG</option>
+    <option value="bulk">Bulk Price</option>
+</select>
+
+<select id="unit" onchange="calculate()">
+    <option value="kg">KG</option>
+    <option value="grams">Grams</option>
+</select>
+
+<div class="display">
+    <div class="label">Your Weight (KG)</div>
+    <div class="value" id="displayWeight">0.000</div>
+</div>
+
+<div class="display">
+    <div class="label">Price Per KG</div>
+    <div class="value" id="displayPrice">0.00</div>
+</div>
+
+<input type="text" id="weight" readonly onclick="setActive('weight')" placeholder="Enter your weight">
+
+<!-- PER KG -->
+<div id="perkgDiv">
+    <input type="number" id="pricePerKg" placeholder="Enter price per KG"
+    onclick="setActive('pricePerKg')" oninput="calculate()">
+</div>
+
+<!-- BULK -->
+<div id="bulkDiv" style="display:none;">
+    <input type="text" id="bulkPrice" placeholder="Actual Price (₹)"
+    onclick="setActive('bulkPrice')" oninput="calculate()">
+
+    <input type="text" id="bulkWeight" placeholder="Actual Weight (KG)"
+    onclick="setActive('bulkWeight')" oninput="calculate()">
+</div>
+
+<div class="total" id="total">₹ 0.00</div>
+
+<div class="keypad">
+    <button onclick="press('1')">1</button>
+    <button onclick="press('2')">2</button>
+    <button onclick="press('3')">3</button>
+    <button onclick="press('4')">4</button>
+    <button onclick="press('5')">5</button>
+    <button onclick="press('6')">6</button>
+    <button onclick="press('7')">7</button>
+    <button onclick="press('8')">8</button>
+    <button onclick="press('9')">9</button>
+    <button onclick="press('.')">.</button>
+    <button onclick="press('0')">0</button>
+    <button class="clear" onclick="clearLast()">⌫</button>
+    <button class="reset" onclick="resetAll()">Reset</button>
+</div>
+
+</div>
+
+<script>
+let activeField = "weight";
+
+function setActive(id){
+    activeField = id;
+    document.querySelectorAll("input").forEach(i=>i.classList.remove("active"));
+    document.getElementById(id).classList.add("active");
+}
+
+function toggleMode(){
+    let mode = document.getElementById("mode").value;
+    document.getElementById("perkgDiv").style.display = mode==="perkg" ? "block":"none";
+    document.getElementById("bulkDiv").style.display = mode==="bulk" ? "block":"none";
+}
+
+// KEYPAD
+function press(val){
+    let input = document.getElementById(activeField);
+    let current = input.value;
+
+    if(activeField==="weight"){
+        if(val==='.' && current.includes('.')) return;
+        if(val==='.' && current===''){ input.value='0.'; calculate(); return;}
+        if(current==='0' && val==='0') return;
+        if(current==='0' && val!=='.'){ input.value=val; calculate(); return;}
+        if(current.includes('.') && current.split('.')[1].length>=3) return;
+    }
+
+    input.value += val;
+    calculate();
+}
+
+function clearLast(){
+    let input = document.getElementById(activeField);
+    input.value = input.value.slice(0,-1);
+    calculate();
+}
+
+function resetAll(){
+    document.querySelectorAll("input").forEach(i=>i.value='');
+    calculate();
+}
+
+function calculate(){
+    let mode = document.getElementById("mode").value;
+    let unit = document.getElementById("unit").value;
+
+    let w = document.getElementById("weight").value;
+
+    if(w==='' || w==='.'){
+        document.getElementById("displayWeight").innerText="0.000";
+        document.getElementById("displayPrice").innerText="0.00";
+        document.getElementById("total").innerText="₹ 0.00";
+        return;
+    }
+
+    let weight = parseFloat(w)||0;
+
+    // convert grams to KG
+    let weightKg = unit==="grams" ? weight/1000 : weight;
+
+    document.getElementById("displayWeight").innerText = weightKg.toFixed(3);
+
+    let pricePerKg=0;
+
+    if(mode==="perkg"){
+        pricePerKg = parseFloat(document.getElementById("pricePerKg").value)||0;
+    } else {
+        let p = parseFloat(document.getElementById("bulkPrice").value)||0;
+        let bw = parseFloat(document.getElementById("bulkWeight").value)||0;
+
+        if(bw>0){
+            pricePerKg = p/bw;
+        }
+    }
+
+    document.getElementById("displayPrice").innerText = pricePerKg.toFixed(2);
+
+    let total = weightKg * pricePerKg;
+
+    document.getElementById("total").innerText = "₹ " + total.toFixed(2);
+}
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('service-worker.js')
+    .then(() => console.log("PWA Ready ✅"))
+    .catch(err => console.log("SW failed ❌", err));
+}
+</script>
+</body>
+</html>
