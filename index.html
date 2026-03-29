@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<link rel="manifest" href="manifest.json">
+<link rel="manifest" href="./manifest.json">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Weighing Calculator</title>
 
@@ -250,9 +250,11 @@ function calculate(){
 
 <script>
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('service-worker.js')
-    .then(() => console.log("PWA Ready ✅"))
-    .catch(err => console.log("SW failed ❌", err));
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./service-worker.js')
+      .then(reg => console.log("SW Registered ✅"))
+      .catch(err => console.log("SW Error ❌", err));
+  });
 }
 </script>
 </body>
